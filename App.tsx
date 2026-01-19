@@ -454,7 +454,6 @@ const ElementConfigCard: React.FC<{
 export default function App() {
   const [screen, setScreen] = useState<AppScreen>(AppScreen.LOGIN);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [hasUserKey, setHasUserKey] = useState(false);
 
   const [project, setProject] = useState<ProjectState>({
     landPhotoDataUrl: '',
@@ -482,11 +481,6 @@ export default function App() {
     const savedProject = localStorage.getItem('garden_project_data');
     if (savedProject) {
       try { setProject(JSON.parse(savedProject)); } catch (e) { console.error(e); }
-    }
-
-    // Check for API Key selection on load
-    if (window.aistudio) {
-      window.aistudio.hasSelectedApiKey().then((has: boolean) => setHasUserKey(has));
     }
   }, []);
 
@@ -517,17 +511,19 @@ export default function App() {
     } else { alert("Sandi akses tidak valid!"); }
   };
 
-  const handleProcess = async () => {
-    if (!isValid) return;
-
-    if (project.modelMode === 'pro') {
+  const handleModelModeChange = async (mode: ModelMode) => {
+    if (mode === 'pro') {
       const hasKey = await window.aistudio.hasSelectedApiKey();
       if (!hasKey) {
-        alert("Mode Ultra Pro memerlukan API Key pribadi.");
         await window.aistudio.openSelectKey();
-        setHasUserKey(true);
+        // Assuming key selection was successful to avoid race condition delays as per guidelines
       }
     }
+    setProject(prev => ({ ...prev, modelMode: mode }));
+  };
+
+  const handleProcess = async () => {
+    if (!isValid) return;
 
     setIsProcessing(true);
     try {
@@ -537,11 +533,13 @@ export default function App() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (e: any) { 
       console.error(e);
-      if (e.message === "API_KEY_ERROR") {
-        alert("Masalah API Key. Silakan hubungkan ulang.");
+      // Guidelines: If the request fails with an error message containing "Requested entity was not found.",
+      // reset the key selection state and prompt the user to select a key again via openSelectKey().
+      if (e.message?.includes("Requested entity was not found") || e.message?.includes("API_KEY_INVALID")) {
+        alert("Terjadi masalah dengan API Key. Silakan pilih kembali API Key berbayar yang valid.");
         await window.aistudio.openSelectKey();
       } else {
-        alert("Gagal memproses AI."); 
+        alert("Gagal memproses AI. Pastikan koneksi internet stabil."); 
       }
     } finally { setIsProcessing(false); }
   };
@@ -698,7 +696,7 @@ export default function App() {
                 
                 <div className="space-y-4 mb-10">
                   <button 
-                    onClick={() => setProject(p => ({ ...p, modelMode: 'flash' }))}
+                    onClick={() => handleModelModeChange('flash')}
                     className={`w-full p-5 rounded-2xl border-2 transition-all text-left flex items-center gap-4 ${project.modelMode === 'flash' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-100 hover:border-emerald-200'}`}
                   >
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${project.modelMode === 'flash' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
@@ -711,7 +709,7 @@ export default function App() {
                   </button>
 
                   <button 
-                    onClick={() => setProject(p => ({ ...p, modelMode: 'pro' }))}
+                    onClick={() => handleModelModeChange('pro')}
                     className={`w-full p-5 rounded-2xl border-2 transition-all text-left flex items-center gap-4 relative overflow-hidden ${project.modelMode === 'pro' ? 'border-emerald-600 bg-emerald-50' : 'border-slate-100 hover:border-emerald-200'}`}
                   >
                     <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[7px] font-black px-3 py-1 rounded-bl-xl uppercase tracking-tighter">Premium</div>
@@ -725,16 +723,21 @@ export default function App() {
                   </button>
 
                   {project.modelMode === 'pro' && (
-                    <div className="mt-4 p-4 bg-amber-50 rounded-2xl border border-amber-100">
-                      <p className="text-[9px] font-bold text-amber-800 leading-relaxed uppercase tracking-tight">
-                        Wajib Menggunakan API Key Berbayar Pribadi
-                      </p>
+                    <div className="mt-4 p-5 bg-amber-50 rounded-2xl border border-amber-200 space-y-3">
+                      <div className="flex items-center justify-between px-1">
+                        <label className="block text-[10px] font-black text-amber-800 uppercase tracking-widest">API Key Billing</label>
+                        <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noreferrer" className="text-[8px] font-black text-emerald-600 underline uppercase tracking-tighter">Billing Guide</a>
+                      </div>
                       <button 
-                        onClick={() => window.aistudio && window.aistudio.openSelectKey()}
-                        className="mt-3 w-full bg-amber-600 text-white py-2 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-amber-700 transition-colors"
+                        onClick={() => window.aistudio.openSelectKey()}
+                        className="w-full bg-white border border-amber-200 rounded-xl px-4 py-3 text-[10px] font-black text-amber-800 uppercase tracking-widest hover:bg-amber-100 transition-all flex items-center justify-center gap-2"
                       >
-                        {hasUserKey ? "Ubah API Key" : "Pilih API Key"}
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+                        Ganti API Key
                       </button>
+                      <p className="text-[8px] font-bold text-amber-600 leading-relaxed uppercase tracking-tight">
+                        * Mode Ultra Pro memerlukan API Key berbayar dari Google AI Studio. Pastikan billing aktif.
+                      </p>
                     </div>
                   )}
                 </div>

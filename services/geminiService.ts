@@ -3,9 +3,11 @@ import { GoogleGenAI } from "@google/genai";
 import { ProjectState } from "../types";
 import { ELEMENT_LABELS } from "../constants";
 
+// Updated to use process.env.API_KEY exclusively as required by guidelines.
+// For Pro models, the key selection is handled via window.aistudio in the UI layer.
 export const generateGardenPreview = async (project: ProjectState): Promise<string> => {
-  // Inisialisasi instance baru tepat sebelum pemanggilan untuk memastikan menggunakan API Key terbaru dari dialog
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  // Always create a new instance right before the call to ensure the latest API key is used
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || "" });
   
   const isPro = project.modelMode === 'pro';
   const modelName = isPro ? 'gemini-3-pro-image-preview' : 'gemini-2.5-flash-image';
@@ -14,7 +16,7 @@ export const generateGardenPreview = async (project: ProjectState): Promise<stri
     {
       inlineData: {
         data: project.landPhotoDataUrl.split(',')[1],
-        mimeType: 'image/jpeg', // Matches output of compressImage
+        mimeType: 'image/jpeg',
       },
     }
   ];
@@ -29,7 +31,6 @@ export const generateGardenPreview = async (project: ProjectState): Promise<stri
       
       let specificStyle = detail.notes || 'standard style';
       
-      // Hardcode the requested "Signature Style" for Chicken Coop if not overridden by significant notes
       if (key === 'chickenCoop') {
         specificStyle = `Architectural Design Reference: Elevated wooden coop with reddish-brown varnished natural wood finish. The main structure has a red corrugated gabled roof. The entire unit sits on a single-layer grey concrete block (batako) foundation. The run area is enclosed in wire mesh and has its own inclined transparent/translucent corrugated roof section. Professional permaculture integrated aesthetic.`;
       }
@@ -38,7 +39,7 @@ export const generateGardenPreview = async (project: ProjectState): Promise<stri
         contentsParts.push({
           inlineData: {
             data: detail.refImageDataUrl.split(',')[1],
-            mimeType: 'image/jpeg', // Matches output of compressImage
+            mimeType: 'image/jpeg',
           },
         });
       }
@@ -57,7 +58,7 @@ export const generateGardenPreview = async (project: ProjectState): Promise<stri
            contentsParts.push({
             inlineData: {
               data: bed.refImageDataUrl.split(',')[1],
-              mimeType: 'image/jpeg', // Matches output of compressImage
+              mimeType: 'image/jpeg',
             },
           });
         }
@@ -116,7 +117,6 @@ export const generateGardenPreview = async (project: ProjectState): Promise<stri
 
     const parts = candidate.content.parts;
     for (const part of parts) {
-      // Find the image part as response can be mixed
       if (part.inlineData) {
         return `data:image/png;base64,${part.inlineData.data}`;
       }
@@ -124,9 +124,7 @@ export const generateGardenPreview = async (project: ProjectState): Promise<stri
     throw new Error("AI did not return an image part.");
   } catch (error: any) {
     console.error("AI Generation Error:", error);
-    if (error.message?.includes("Requested entity was not found")) {
-      throw new Error("API_KEY_ERROR");
-    }
+    // Propagate original error for handleProcess to catch specific messages like "Requested entity was not found"
     throw error;
   }
 };
