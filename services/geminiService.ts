@@ -1,16 +1,31 @@
 
 import { GoogleGenAI } from "@google/genai";
-import { ProjectState } from "../types";
+import { ProjectState, Position } from "../types";
 import { ELEMENT_LABELS } from "../constants";
 
-// Updated to use process.env.API_KEY exclusively as required by guidelines.
-// For Pro models, the key selection is handled via window.aistudio in the UI layer.
+// Pemetaan posisi UI ke sistem koordinat grid 0-100
+// 0,0 adalah ujung belakang (background), 100,100 adalah ujung depan (foreground)
+const getCoordinates = (pos: Position): { x: number; y: number } | null => {
+  const map: Record<string, { x: number; y: number }> = {
+    'Kiri Atas': { x: 15, y: 15 },
+    'Tengah Atas': { x: 50, y: 15 },
+    'Kanan Atas': { x: 85, y: 15 },
+    'Tengah Kiri': { x: 15, y: 50 },
+    'Tengah': { x: 50, y: 50 },
+    'Tengah Kanan': { x: 85, y: 50 },
+    'Kiri Bawah': { x: 15, y: 85 },
+    'Tengah Bawah': { x: 50, y: 85 },
+    'Kanan Bawah': { x: 85, y: 85 },
+  };
+  return map[pos] || null;
+};
+
 export const generateGardenPreview = async (project: ProjectState): Promise<string> => {
-  // Always create a new instance right before the call to ensure the latest API key is used
-  // Directly using process.env.API_KEY as per Google GenAI SDK guidelines.
+  // Always create a new instance of GoogleGenAI before generating content to use the latest API key.
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const isPro = project.modelMode === 'pro';
+  // Selalu gunakan Gemini 2.5 Flash Image untuk kecepatan, kecuali user pilih Pro eksplisit
   const modelName = isPro ? 'gemini-3-pro-image-preview' : 'gemini-2.5-flash-image';
   
   const contentsParts: any[] = [
@@ -22,18 +37,25 @@ export const generateGardenPreview = async (project: ProjectState): Promise<stri
     }
   ];
 
+  // Deskripsi elemen dengan kalkulasi skala relatif terhadap luas lahan
   const elementDescriptions = Object.entries(project.selectedElements)
     .filter(([key, selected]) => selected && key !== 'raisedBed')
     .map(([key]) => {
       const detail = project.elementsDetail[key];
-      const posText = detail.position === 'Otomatis' 
-        ? "at the most logical position determined by AI" 
-        : `at the ${detail.position} position`;
+      const coords = getCoordinates(detail.position);
       
-      let specificStyle = detail.notes || 'standard style';
+      // Hitung skala objek terhadap dimensi lahan asli
+      const widthPercent = (detail.widthM / project.landWidthM) * 100;
+      const depthPercent = (detail.lengthM / project.landLengthM) * 100;
+
+      const posInstruction = coords 
+        ? `STRICT PLACEMENT: Place at coordinates X:${coords.x}, Y:${coords.y} on the ground plane.`
+        : "PLACEMENT: Position this naturally at the most logical spot for permaculture.";
+      
+      let styleText = detail.notes || 'Professional organic farm style.';
       
       if (key === 'chickenCoop') {
-        specificStyle = `Architectural Design Reference: Elevated wooden coop with reddish-brown varnished natural wood finish. The main structure has a red corrugated gabled roof. The entire unit sits on a single-layer grey concrete block (batako) foundation. The run area is enclosed in wire mesh and has its own inclined transparent/translucent corrugated roof section. Professional permaculture integrated aesthetic.`;
+        styleText += " Material: Natural cedar wood, sturdy wire mesh, rustic green roof.";
       }
 
       if (detail.refImageDataUrl) {
@@ -45,91 +67,78 @@ export const generateGardenPreview = async (project: ProjectState): Promise<stri
         });
       }
 
-      return `- ${ELEMENT_LABELS[key]}: size ${detail.lengthM}m x ${detail.widthM}m, positioned ${posText}. Style: ${specificStyle}. ${detail.refImageDataUrl ? 'Follow the architectural patterns from the attached reference image.' : ''}`;
+      return `- ${ELEMENT_LABELS[key]}:
+        * Sizing: Occupy ${widthPercent.toFixed(0)}% of land width and ${depthPercent.toFixed(0)}% of land depth.
+        * Location: ${posInstruction}
+        * Visual Details: ${styleText}`;
     })
     .join("\n");
 
+  // Deskripsi bedengan (Raised Beds)
   const raisedBedDescriptions = project.selectedElements.raisedBed
     ? project.raisedBeds.map((bed, idx) => {
-        const posText = bed.position === 'Otomatis' 
-          ? "at the best spot for sunlight" 
-          : `at the ${bed.position} position`;
-        
-        if (bed.refImageDataUrl) {
-           contentsParts.push({
-            inlineData: {
-              data: bed.refImageDataUrl.split(',')[1],
-              mimeType: 'image/jpeg',
-            },
-          });
-        }
+        const coords = getCoordinates(bed.position);
+        const wPct = (bed.widthM / project.landWidthM) * 100;
+        const dPct = (bed.lengthM / project.landLengthM) * 100;
 
-        return `- Raised Bed #${idx + 1}: size ${bed.lengthM}m x ${bed.widthM}m, material: ${bed.material}, ${bed.hasTrellis ? 'include trellis (Tiang Rambatan/Ajir)' : 'no trellis'}, positioned ${posText}. Plants: ${bed.plantsText || 'various vegetables'}. ${bed.refImageDataUrl ? 'Use attached reference image for bed design.' : ''}`;
+        const posText = coords 
+          ? `at X:${coords.x}, Y:${coords.y}` 
+          : "arranged in an organized grid cluster.";
+        
+        return `- Raised Bed #${idx + 1}: Scale ${wPct.toFixed(0)}%x${dPct.toFixed(0)}%, Material: ${bed.material}, ${bed.hasTrellis ? 'with climbing trellis' : 'open top'}, located ${posText}. Growing: ${bed.plantsText || 'fresh vegetables'}.`;
       }).join("\n")
     : "";
 
-  const removePeopleInstruction = project.removePeople 
-    ? "MANDATORY: Remove all humans/people present in the original photo. Seamlessly replace the area they occupied with background textures like grass, soil, or paving to match the surroundings."
-    : "NO humans/people should be added to the design.";
+  const removePeople = project.removePeople 
+    ? "CRITICAL: The original photo might have people; you MUST remove them completely and fill the space with natural ground textures."
+    : "";
 
   const prompt = `
-    TASK: Transform the source land plot photo into a professional integrated garden design.
-    ${isPro ? "QUALITY: Use Ultra High Definition render with master-level landscape details." : ""}
+    TASK: Photorealistic 3D Landscape Transformation.
     
-    ${removePeopleInstruction}
-
-    GROUND MATERIAL:
-    The background area of the land plot (areas not occupied by specific elements) must be covered with: ${project.groundBase}. 
-    Ensure the texture of the ${project.groundBase} looks realistic and well-maintained.
-
-    CRITICAL COMPONENTS TO ADD:
+    LAND SPECS:
+    Current land dimensions are ${project.landLengthM} meters deep by ${project.landWidthM} meters wide.
+    Ground Surface: Entire empty ground area must be covered with ${project.groundBase}.
+    
+    SPATIAL GRID LOGIC:
+    Imagine a 100x100 coordinate system on the ground of the original photo (0,0 is far back, 100,100 is near front).
+    Render these elements into the photo with perfect perspective and lighting:
+    
     ${elementDescriptions}
     ${raisedBedDescriptions}
 
-    ABSOLUTE NEGATIVE CONSTRAINTS:
-    - NO logos, NO text, NO UI elements.
-    - NO vehicles.
-    - DO NOT change the sky or distant background.
-    - ONLY modify the foreground midground area of the land plot.
+    ${removePeople}
 
-    STYLE:
-    - High-quality 3D photorealistic rendering.
-    - Professional permaculture architecture.
+    QUALITY RULES:
+    - 3D perspective must match the original camera angle exactly.
+    - Shadows must be cast logically based on the environment's light source.
+    - Textures must be high-resolution (wood, soil, plants).
+    - ABSOLUTELY NO TEXT, NO LABELS, NO WATERMARKS in the image.
   `.trim();
 
   contentsParts.push({ text: prompt });
 
   try {
+    // Generate content for image models. Note that thinkingConfig is not standard for image-generation tasks.
     const response = await ai.models.generateContent({
       model: modelName,
       contents: { parts: contentsParts },
-      config: isPro ? {
+      config: {
         imageConfig: {
-          aspectRatio: "16:9",
-          imageSize: "1K"
+          aspectRatio: "16:9" // Matches the visual container in the UI
         }
-      } : undefined
+      }
     });
 
-    if (!response || !response.candidates || response.candidates.length === 0) {
-      throw new Error("AI did not return any candidates.");
-    }
+    if (!response.candidates?.[0]) throw new Error("Gagal mendapatkan respon dari AI.");
 
-    const candidate = response.candidates[0];
-    if (!candidate.content || !candidate.content.parts) {
-      throw new Error("AI candidate did not contain any content or parts.");
+    for (const part of response.candidates[0].content.parts) {
+      // Find and return the image part if present in the model's response.
+      if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
     }
-
-    const parts = candidate.content.parts;
-    for (const part of parts) {
-      if (part.inlineData) {
-        return `data:image/png;base64,${part.inlineData.data}`;
-      }
-    }
-    throw new Error("AI did not return an image part.");
-  } catch (error: any) {
-    console.error("AI Generation Error:", error);
-    // Propagate original error for handleProcess to catch specific messages like "Requested entity was not found"
+    throw new Error("Data gambar tidak ditemukan dalam respon.");
+  } catch (error) {
+    console.error("AI Error:", error);
     throw error;
   }
 };
