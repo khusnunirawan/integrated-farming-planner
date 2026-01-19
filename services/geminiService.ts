@@ -7,7 +7,8 @@ import { ELEMENT_LABELS } from "../constants";
 // For Pro models, the key selection is handled via window.aistudio in the UI layer.
 export const generateGardenPreview = async (project: ProjectState): Promise<string> => {
   // Always create a new instance right before the call to ensure the latest API key is used
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || "" });
+  // Directly using process.env.API_KEY as per Google GenAI SDK guidelines.
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const isPro = project.modelMode === 'pro';
   const modelName = isPro ? 'gemini-3-pro-image-preview' : 'gemini-2.5-flash-image';
@@ -76,6 +77,10 @@ export const generateGardenPreview = async (project: ProjectState): Promise<stri
     ${isPro ? "QUALITY: Use Ultra High Definition render with master-level landscape details." : ""}
     
     ${removePeopleInstruction}
+
+    GROUND MATERIAL:
+    The background area of the land plot (areas not occupied by specific elements) must be covered with: ${project.groundBase}. 
+    Ensure the texture of the ${project.groundBase} looks realistic and well-maintained.
 
     CRITICAL COMPONENTS TO ADD:
     ${elementDescriptions}

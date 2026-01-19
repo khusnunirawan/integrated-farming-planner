@@ -1,5 +1,5 @@
 
-import { SizePreset, ElementDetail, Position, RaisedBedDetail, Material } from './types';
+import { SizePreset, ElementDetail, Position, RaisedBedDetail, Material, GroundBase } from './types';
 
 export const APP_PASSWORD = "ayongopi123"; // Password statis untuk demo
 
@@ -21,6 +21,8 @@ export const ELEMENT_LABELS: Record<string, string> = {
 };
 
 export const MATERIAL_OPTIONS: Material[] = ['Otomatis', 'Bata Merah', 'Batako', 'Kayu', 'Alumunium'];
+
+export const GROUND_BASE_OPTIONS: GroundBase[] = ['Rumput', 'Paving Block', 'Batu Kerikil', 'Tanah', 'Daun Kering'];
 
 export const INITIAL_ELEMENT_DETAIL: ElementDetail = {
   sizePreset: 'Sedang',

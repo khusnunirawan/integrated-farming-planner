@@ -17,6 +17,8 @@ export type Position =
 
 export type Material = 'Otomatis' | 'Bata Merah' | 'Batako' | 'Kayu' | 'Alumunium';
 
+export type GroundBase = 'Rumput' | 'Paving Block' | 'Batu Kerikil' | 'Tanah' | 'Daun Kering';
+
 export interface ElementDetail {
   sizePreset: SizePreset;
   lengthM: number;
@@ -37,6 +39,7 @@ export interface ProjectState {
   landPhotoDataUrl: string;
   landLengthM: number;
   landWidthM: number;
+  groundBase: GroundBase;
   removePeople: boolean;
   modelMode: ModelMode;
   selectedElements: {

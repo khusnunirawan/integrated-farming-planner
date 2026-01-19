@@ -9,7 +9,7 @@ declare global {
   }
 
   interface Window {
-    /* Removed readonly modifier to match the likely declaration provided by the host environment and resolve modifier mismatch errors */
-    aistudio: AIStudio;
+    // Added the readonly modifier to match the underlying environment declaration and fix the modifier mismatch error.
+    readonly aistudio: AIStudio;
   }
 }
