@@ -22,7 +22,7 @@ export const ELEMENT_LABELS: Record<string, string> = {
 
 export const MATERIAL_OPTIONS: Material[] = ['Otomatis', 'Bata Merah', 'Batako', 'Kayu', 'Alumunium'];
 
-export const GROUND_BASE_OPTIONS: GroundBase[] = ['Rumput', 'Paving Block', 'Batu Kerikil', 'Tanah', 'Daun Kering'];
+export const GROUND_BASE_OPTIONS: GroundBase[] = ['Asli / Apa Adanya', 'Rumput', 'Paving Block', 'Batu Kerikil', 'Tanah', 'Daun Kering'];
 
 export const INITIAL_ELEMENT_DETAIL: ElementDetail = {
   sizePreset: 'Sedang',

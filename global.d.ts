@@ -9,8 +9,7 @@ declare global {
   }
 
   interface Window {
-    // Removed the readonly modifier to match the underlying environment declaration and fix the modifier mismatch error.
-    // The error "All declarations of 'aistudio' must have identical modifiers" occurs when multiple declarations of the same property in the same interface have different readonly or optionality modifiers.
+    // Removed the readonly modifier to resolve the "All declarations of 'aistudio' must have identical modifiers" error.
     aistudio: AIStudio;
   }
 }

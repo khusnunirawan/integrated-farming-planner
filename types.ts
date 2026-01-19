@@ -17,7 +17,7 @@ export type Position =
 
 export type Material = 'Otomatis' | 'Bata Merah' | 'Batako' | 'Kayu' | 'Alumunium';
 
-export type GroundBase = 'Rumput' | 'Paving Block' | 'Batu Kerikil' | 'Tanah' | 'Daun Kering';
+export type GroundBase = 'Asli / Apa Adanya' | 'Rumput' | 'Paving Block' | 'Batu Kerikil' | 'Tanah' | 'Daun Kering';
 
 export interface ElementDetail {
   sizePreset: SizePreset;

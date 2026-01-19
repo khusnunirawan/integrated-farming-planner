@@ -93,12 +93,16 @@ export const generateGardenPreview = async (project: ProjectState): Promise<stri
     ? "CRITICAL: The original photo might have people; you MUST remove them completely and fill the space with natural ground textures."
     : "";
 
+  const groundInstruction = project.groundBase === 'Asli / Apa Adanya'
+    ? "Ground Surface: Keep the existing ground texture and original environment appearance from the photo. Do not overlay new ground materials unless necessary for blending."
+    : `Ground Surface: Entire empty ground area must be covered with ${project.groundBase}.`;
+
   const prompt = `
     TASK: Photorealistic 3D Landscape Transformation.
     
     LAND SPECS:
     Current land dimensions are ${project.landLengthM} meters deep by ${project.landWidthM} meters wide.
-    Ground Surface: Entire empty ground area must be covered with ${project.groundBase}.
+    ${groundInstruction}
     
     SPATIAL GRID LOGIC:
     Imagine a 100x100 coordinate system on the ground of the original photo (0,0 is far back, 100,100 is near front).
@@ -119,13 +123,12 @@ export const generateGardenPreview = async (project: ProjectState): Promise<stri
   contentsParts.push({ text: prompt });
 
   try {
-    // Generate content for image models. Note that thinkingConfig is not standard for image-generation tasks.
     const response = await ai.models.generateContent({
       model: modelName,
       contents: { parts: contentsParts },
       config: {
         imageConfig: {
-          aspectRatio: "16:9" // Matches the visual container in the UI
+          aspectRatio: "16:9" 
         }
       }
     });
@@ -133,7 +136,6 @@ export const generateGardenPreview = async (project: ProjectState): Promise<stri
     if (!response.candidates?.[0]) throw new Error("Gagal mendapatkan respon dari AI.");
 
     for (const part of response.candidates[0].content.parts) {
-      // Find and return the image part if present in the model's response.
       if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
     }
     throw new Error("Data gambar tidak ditemukan dalam respon.");
