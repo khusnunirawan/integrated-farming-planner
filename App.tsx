@@ -74,9 +74,7 @@ const LoadingOverlay: React.FC<{ isVisible: boolean }> = ({ isVisible }) => {
           <div className="absolute inset-0 bg-emerald-400/20 blur-3xl rounded-full"></div>
           <div className="w-24 h-24 border-4 border-emerald-500/20 border-t-emerald-400 rounded-full animate-spin"></div>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-             <svg className="w-10 h-10 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-             </svg>
+             <img src="/assets/logo.svg" alt="Loading Logo" className="w-12 h-12" />
           </div>
         </div>
         <h3 className="text-2xl font-black text-white mb-4 tracking-tight">Ai Sedang Merancang</h3>
@@ -97,8 +95,8 @@ const Login: React.FC<{ onLogin: (pass: string) => void }> = ({ onLogin }) => {
     <div className="min-h-screen flex items-center justify-center bg-[#064e3b] p-6 relative overflow-hidden">
       <div className="bg-white p-10 rounded-2xl w-full max-w-md relative z-10 border border-emerald-100/20">
         <div className="flex justify-center mb-8">
-          <div className="w-20 h-20 bg-emerald-50 rounded-2xl flex items-center justify-center transform rotate-6 hover:rotate-0 transition-transform duration-500">
-             <svg className="w-10 h-10 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 002 2h2.945M8 3.935A9 9 0 1116.065 20.065M8 3.935a8.963 8.963 0 018.065 0"></path></svg>
+          <div className="w-24 h-24 bg-emerald-50 rounded-2xl flex items-center justify-center transform rotate-6 hover:rotate-0 transition-transform duration-500 p-4">
+             <img src="/assets/logo.svg" alt="App Logo" className="w-full h-full" />
           </div>
         </div>
         <h1 className="text-3xl font-black text-center text-slate-900 mb-2 tracking-tight">
@@ -557,8 +555,8 @@ export default function App() {
       
       <nav className="bg-white/80 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-[60] px-8 py-5 flex justify-between items-center">
         <div className="flex items-center gap-4 group cursor-pointer" onClick={() => setScreen(AppScreen.APP)}>
-          <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white group-hover:scale-110 transition-transform">
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+          <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white group-hover:scale-110 transition-transform p-2">
+             <img src="/assets/logo.svg" alt="Nav Logo" className="w-full h-full brightness-0 invert" />
           </div>
           <div>
             <h1 className="text-xl font-black text-slate-900 leading-tight tracking-tight">
