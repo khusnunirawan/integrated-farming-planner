@@ -133,12 +133,20 @@ export const generateGardenPreview = async (project: ProjectState): Promise<stri
       }
     });
 
-    if (!response.candidates?.[0]) throw new Error("Gagal mendapatkan respon dari AI.");
+    const candidate = response.candidates?.[0];
+    const parts = candidate?.content?.parts;
 
-    for (const part of response.candidates[0].content.parts) {
-      if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
+    if (!candidate || !parts) {
+      throw new Error("Gagal mendapatkan respon valid dari AI.");
     }
-    throw new Error("Data gambar tidak ditemukan dalam respon.");
+
+    for (const part of parts) {
+      if (part.inlineData) {
+        return `data:image/png;base64,${part.inlineData.data}`;
+      }
+    }
+    
+    throw new Error("Data gambar tidak ditemukan dalam respon AI.");
   } catch (error) {
     console.error("AI Error:", error);
     throw error;
