@@ -1,0 +1,7 @@
+{
+  "name": "Sulap Kebun",
+  "description": "Sebuah prototipe aplikasi perencana kebun terintegrasi yang mengubah foto lahan menjadi desain kebun profesional menggunakan AI.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
